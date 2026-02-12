@@ -1,0 +1,27 @@
+package com.task1.suman.model;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.UUID;
+
+@Entity
+@Table(name = "address")
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+public class Address {
+    @Id
+    @GeneratedValue
+    private UUID id;
+
+    private String street;
+
+    private String city;
+
+    private String state;
+
+    private String zipCode;
+}
