@@ -13,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration      // "This class contains configuration/settings"
 @EnableWebSecurity  // "Enable Spring Security for this project"
@@ -21,11 +22,16 @@ public class SecurityConfig {
     @Autowired
     private JwtFilter jwtFilter;
 
+    @Autowired
+    private CorsConfigurationSource corsConfigurationSource;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         // This method defines ALL security rules
 
         http
+                //Disable Cross Origin Resource Sharing error
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 // 1. Disable CSRF (not needed for REST APIs with JWT)
                 .csrf(csrf -> csrf.disable())
                 //  ↑↑↑↑
@@ -44,6 +50,7 @@ public class SecurityConfig {
 
                                 // ADMIN only endpoints
                                 .requestMatchers(HttpMethod.DELETE, "/users/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/users/**").hasRole("ADMIN")
                                 //  ↑↑↑↑
                                 //  Only ADMIN can DELETE users
 
