@@ -3,6 +3,7 @@ package com.task1.suman.controller;
 import com.task1.suman.model.User;
 import com.task1.suman.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,8 +18,11 @@ public class UserController {
     private UserService userService;
 
     @GetMapping()
-    public ResponseEntity<List<User>> getUsers(){
-        return new ResponseEntity<>(userService.getUsers(), HttpStatus.OK);
+    public ResponseEntity<Page<User>> getUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        return new ResponseEntity<>(userService.getUsers(page, size), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
