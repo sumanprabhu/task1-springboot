@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 import java.util.UUID;
@@ -44,6 +45,39 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable UUID id,@RequestBody User user){
         return new ResponseEntity<>(userService.updateUser(id,user),HttpStatus.OK);
+    }
+
+    // PUT /users/me — Edit own profile
+    @PutMapping("/me")
+    public ResponseEntity<User> updateSelf(
+            @RequestBody User user,
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+
+        User existingUser = userService.getUserByEmail(email);
+
+        // Users can update ONLY these fields
+        existingUser.setName(user.getName());
+        existingUser.setContactNum(user.getContactNum());
+
+        // Update address if provided
+        if (user.getAddress() != null) {
+            existingUser.setAddress(user.getAddress());
+        }
+
+        // ❌ Users CANNOT change their own role or email
+        // Role and email stay the same!
+
+        return new ResponseEntity<>(userService.saveUser(existingUser), HttpStatus.OK);
+    }
+
+    // GET /users/me — Get own profile
+    @GetMapping("/me")
+    public ResponseEntity<User> getSelf(Authentication authentication) {
+        String email = authentication.getName();
+        User user = userService.getUserByEmail(email);
+        return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
