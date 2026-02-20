@@ -13,5 +13,4 @@ public class RegisterRequest {
     private String email;
     private String password;
     private String contactNum;
-    private String roleName;  // Just send "ADMIN" or "USER" as string instead of sending entire Role object!
 }
