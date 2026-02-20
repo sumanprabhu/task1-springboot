@@ -40,6 +40,18 @@ public class UserService {
                 );
     }
 
+    public User getUserByEmail(String email) {
+        return userRepo.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "User not found with email: " + email
+                ));
+    }
+
+    public User saveUser(User user) {
+        return userRepo.save(user);
+    }
+
     public User addUser(User user) {
 
         if (user.getRole() != null) {
