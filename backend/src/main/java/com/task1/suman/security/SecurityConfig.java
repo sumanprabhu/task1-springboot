@@ -44,25 +44,26 @@ public class SecurityConfig {
 
                         // PUBLIC
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/ai/**").permitAll()
+                        .requestMatchers("/ai/chat").permitAll()
 
-                        // SELF EDIT — any logged in user
+                        // AGENT — needs authentication (token required)
+                        .requestMatchers("/ai/agent/**").authenticated()
+
+                        // SELF EDIT
                         .requestMatchers(HttpMethod.GET, "/users/me").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/users/me").authenticated()
 
-                        // ADMIN REQUEST — any logged in user can request
+                        // ADMIN REQUEST
                         .requestMatchers(HttpMethod.POST, "/admin/request").authenticated()
 
-                        // ADMIN ONLY — approve/reject and view requests
+                        // ADMIN ONLY
                         .requestMatchers("/admin/requests").hasRole("ADMIN")
                         .requestMatchers("/admin/approve/**").hasRole("ADMIN")
                         .requestMatchers("/admin/reject/**").hasRole("ADMIN")
-
-                        // ADMIN ONLY — manage other users
                         .requestMatchers(HttpMethod.PUT, "/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/users/**").hasRole("ADMIN")
 
-                        // Everything else needs authentication
+                        // Everything else
                         .anyRequest().authenticated()
                 )
 

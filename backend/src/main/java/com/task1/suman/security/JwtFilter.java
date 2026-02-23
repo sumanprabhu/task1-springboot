@@ -31,10 +31,7 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return path.startsWith("/auth/") || path.startsWith("/ai/");
-        //     ↑↑↑↑
-        //  "Don't run this filter for /auth/ and /ai/ endpoints"
-        //  These are public, no token needed, skip the guard!
+        return path.startsWith("/auth/") || path.startsWith("/ai/chat");
     }
 
     @Override

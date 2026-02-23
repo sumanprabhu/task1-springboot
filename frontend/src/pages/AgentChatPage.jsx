@@ -1,19 +1,39 @@
 import { useState, useRef, useEffect } from "react";
-import { agentChat } from "../services/api";
+import { agentChat, requestAgentChat, orchestratorChat } from "../services/api";
 import "./AgentChatPage.css";
 
 const AgentChatPage = () => {
-  const [messages, setMessages] = useState([
-    {
-      sender: "agent",
-      text: "👋 Hi! I'm the User Admin Agent. I can help you manage users. Try saying:\n\n• Show me all users\n• Create a user named Rahul with email rahul@gmail.com and phone 9876543210\n• Find user with email suman@gmail.com\n• Make someone an admin\n• Delete a user",
-    },
-  ]);
+  const role = localStorage.getItem("role");
+  const [activeAgent, setActiveAgent] = useState("orchestrator");
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef(null);
 
-  // Auto scroll to bottom when new message arrives
+  const agentInfo = {
+    orchestrator: {
+      name: "🧠 Smart Assistant",
+      welcome:
+        role === "ADMIN"
+          ? "👋 Hi Admin! I'm your Smart Assistant. I automatically route your requests!\n\n🛡️ User Management: Create, find, delete, edit users\n📋 Admin Requests: View, approve, reject requests\n\nJust ask me anything!"
+          : "👋 Hi! I'm your Smart Assistant.\n\n🔍 I can help you search and view users.\n⚠️ For create/delete operations, you need ADMIN access.\n\nJust ask me anything!",
+    },
+    "user-admin": {
+      name: "🛡️ User Admin Agent",
+      welcome:
+        "👋 I'm the User Admin Agent.\n\n• Show all users\n• Find by name/email/city\n• User statistics",
+    },
+    "admin-requests": {
+      name: "📋 Admin Request Agent",
+      welcome:
+        "👋 I'm the Admin Request Agent.\n\n• Show pending requests\n• Approve/reject requests\n• Request statistics",
+    },
+  };
+
+  useEffect(() => {
+    setMessages([{ sender: "agent", text: agentInfo[activeAgent].welcome }]);
+  }, [activeAgent]);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -24,18 +44,22 @@ const AgentChatPage = () => {
     const userMessage = input.trim();
     setInput("");
 
-    // Add user message to chat
     setMessages((prev) => [...prev, { sender: "user", text: userMessage }]);
-
-    // Show loading
     setLoading(true);
 
     try {
-      const response = await agentChat(userMessage);
+      let response;
+      if (activeAgent === "orchestrator") {
+        response = await orchestratorChat(userMessage);
+      } else if (activeAgent === "user-admin") {
+        response = await agentChat(userMessage);
+      } else {
+        response = await requestAgentChat(userMessage);
+      }
+
       const agentResponse =
         response.data.response || "I couldn't process that. Please try again.";
 
-      // Add agent response to chat
       setMessages((prev) => [
         ...prev,
         { sender: "agent", text: agentResponse },
@@ -65,8 +89,30 @@ const AgentChatPage = () => {
   return (
     <div className="chat-container">
       <div className="chat-header">
-        <h2>🤖 User Admin Agent</h2>
-        <p>Manage users through natural language</p>
+        <h2>{agentInfo[activeAgent].name}</h2>
+
+        <div className="agent-selector">
+          <button
+            onClick={() => setActiveAgent("orchestrator")}
+            className={`agent-tab ${activeAgent === "orchestrator" ? "active-tab" : ""}`}
+          >
+            🧠 Smart
+          </button>
+          <button
+            onClick={() => setActiveAgent("user-admin")}
+            className={`agent-tab ${activeAgent === "user-admin" ? "active-tab" : ""}`}
+          >
+            🛡️ Users
+          </button>
+          {role === "ADMIN" && (
+            <button
+              onClick={() => setActiveAgent("admin-requests")}
+              className={`agent-tab ${activeAgent === "admin-requests" ? "active-tab" : ""}`}
+            >
+              📋 Requests
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="chat-messages">
@@ -98,7 +144,7 @@ const AgentChatPage = () => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Type your message... (e.g., Show all users)"
+          placeholder="Type your message..."
           className="chat-input"
           disabled={loading}
         />

@@ -41,7 +41,12 @@ export const getPendingRequests = () => api.get("/admin/requests");
 export const approveRequest = (id) => api.put(`/admin/approve/${id}`);
 export const rejectRequest = (id) => api.put(`/admin/reject/${id}`);
 
-// AI AGENT
 export const agentChat = (message) => api.post("/ai/agent", { message });
+
+export const requestAgentChat = (message) =>
+  api.post("/ai/agent/requests", { message });
+
+export const orchestratorChat = (message) =>
+  api.post("/ai/agent/orchestrator", { message });
 
 export default api;

@@ -1,82 +1,86 @@
 package com.task1.suman.ai;
 
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserAdminAgent {
 
-    private final ChatClient chatClient;
+    private final ChatClient.Builder clientBuilder;
 
     public UserAdminAgent(ChatClient.Builder builder) {
-        this.chatClient = builder
-
-                // SYSTEM PROMPT — The agent's personality and rules
-                .defaultSystem("""
-                        You are the User Admin Agent for a User Management System.
-
-                        YOUR ROLE:
-                        - You help administrators manage users in the system
-                        - You can create, find, delete, list users and change their roles
-
-                        RULES:
-                        1. Always confirm before deleting a user
-                        2. When creating a user, you need: name, email, and contact number
-                        3. If any required information is missing, ASK for it
-                        4. Valid roles are: ADMIN and USER only
-                        5. Always be polite and professional
-                        6. After performing any action, summarize what you did
-                        7. If something fails, explain why clearly
-
-                        AVAILABLE TOOLS:
-                        - createUserTool: Create a new user (needs name, email, contactNum)
-                        - findUserTool: Find a user by email
-                        - deleteUserTool: Delete a user by email
-                        - listUsersTool: List users (filter: all, admins, users)
-                        - changeRoleTool: Change a user's role (needs email, newRole)
-
-                        RESPONSE FORMAT:
-                        - Keep responses short and clear
-                        - Use emojis sparingly for readability
-                        - Always state the result of the action
-                        """)
-                //  ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-                //  This is like giving a JOB DESCRIPTION to a new employee!
-                //  The AI will FOLLOW these rules in every conversation
-                //  System prompt = personality + rules + boundaries
-
-                // REGISTER TOOLS — Tell the agent which tools it can use
-                .defaultFunctions(
-                        "createUserTool",
-                        "findUserTool",
-                        "deleteUserTool",
-                        "listUsersTool",
-                        "changeRoleTool"
-                )
-                //  ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-                //  These names MUST match the @Component("name")
-                //  in each tool class!
-                //
-                //  AI now has a MENU of 5 tools
-                //  It will automatically decide which tool to call
-                //  based on what the user asks!
-
-                .build();
+        this.clientBuilder = builder;
     }
 
-    // The agent processes user messages
-    public String chat(String userMessage) {
+    public String chat(String userMessage, String role) {
+        ChatClient chatClient;
+
+        if (role.equals("ADMIN")) {
+            chatClient = clientBuilder
+                    .defaultSystem("""
+                            You are the User Admin Agent. Talking to an ADMIN with FULL access.
+                            
+                            RULES:
+                            1. Confirm before deleting
+                            2. Creating user needs: name, email, contactNum
+                            3. Ask for missing info
+                            4. Valid roles: ADMIN, USER
+                            5. Be polite, summarize actions
+                            
+                            TOOLS:
+                            - createUserTool: Create user
+                            - findUserTool: Find by email
+                            - deleteUserTool: Delete by email
+                            - listUsersTool: List users (filter: all/admins/users)
+                            - changeRoleTool: Change role
+                            - searchByNameTool: Search by name
+                            - searchByCityTool: Search by city
+                            - userStatsTool: User statistics
+                            - addressFilterTool: Filter by address
+                            
+                            USE TOOLS. DO NOT MAKE UP DATA.
+                            """)
+                    .defaultFunctions(
+                            "createUserTool", "findUserTool", "deleteUserTool",
+                            "listUsersTool", "changeRoleTool", "searchByNameTool",
+                            "searchByCityTool", "userStatsTool", "addressFilterTool"
+                    )
+                    .defaultAdvisors(new MessageChatMemoryAdvisor(new InMemoryChatMemory()))
+                    .build();
+        } else {
+            chatClient = clientBuilder
+                    .defaultSystem("""
+                            You are the User Admin Agent. Talking to a USER with LIMITED access.
+                            
+                            RULES:
+                            1. You can ONLY search and view users
+                            2. You CANNOT create, delete, or change roles
+                            3. If asked to create/delete/change role, say:
+                               "Sorry, you need ADMIN access. Request it from your Profile page."
+                            
+                            TOOLS (READ ONLY):
+                            - findUserTool: Find by email
+                            - listUsersTool: List users
+                            - searchByNameTool: Search by name
+                            - searchByCityTool: Search by city
+                            - userStatsTool: Statistics
+                            - addressFilterTool: Filter by address
+                            
+                            USE TOOLS. DO NOT MAKE UP DATA.
+                            """)
+                    .defaultFunctions(
+                            "findUserTool", "listUsersTool", "searchByNameTool",
+                            "searchByCityTool", "userStatsTool", "addressFilterTool"
+                    )
+                    .defaultAdvisors(new MessageChatMemoryAdvisor(new InMemoryChatMemory()))
+                    .build();
+        }
+
         return chatClient.prompt()
-                .user(userMessage)       // What the user is asking
-                .call()                  // Send to AI (with tools available)
-                .content();              // Get response text
-        //
-        //  What happens inside .call():
-        //  1. AI reads user message
-        //  2. AI reads system prompt (its rules)
-        //  3. AI reads tool descriptions
-        //  4. AI decides: "Should I call a tool?"
-        //     YES → Calls the tool → Gets result → Responds
-        //     NO  → Just responds with text
+                .user(userMessage)
+                .call()
+                .content();
     }
 }

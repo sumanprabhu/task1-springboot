@@ -1,30 +1,26 @@
 package com.task1.suman.ai.tools;
 
-// These records define WHAT the AI sends to each tool
-// and WHAT each tool sends back
+import java.util.List;
 
-// ===== CREATE USER =====
 public class ToolRecords {
 
-    // What AI sends to createUser tool
+    // ===== CREATE USER =====
     public record CreateUserRequest(
             String name,
             String email,
             String contactNum
     ) {}
 
-    // What createUser tool sends back to AI
     public record CreateUserResponse(
             String status,
             String message
     ) {}
 
-    // What AI sends to findUser tool
+    // ===== FIND USER =====
     public record FindUserRequest(
             String email
     ) {}
 
-    // What findUser tool sends back
     public record FindUserResponse(
             String name,
             String email,
@@ -33,30 +29,53 @@ public class ToolRecords {
             String city
     ) {}
 
-    // What AI sends to deleteUser tool
+    // ===== DELETE USER =====
     public record DeleteUserRequest(
             String email
     ) {}
 
-    // What AI sends to changeRole tool
+    // ===== CHANGE ROLE =====
     public record ChangeRoleRequest(
             String email,
             String newRole
     ) {}
 
-    // What AI sends to listUsers tool
+    // ===== LIST USERS =====
     public record ListUsersRequest(
             String filter
-            // "all", "admins", "users"
     ) {}
 
-    // Generic response for simple operations
+    // ===== SEARCH BY NAME =====
+    public record SearchByNameRequest(
+            String name
+    ) {}
+
+    // ===== SEARCH BY CITY =====
+    public record SearchByCityRequest(
+            String city
+    ) {}
+
+    // ===== ADDRESS FILTER =====
+    public record AddressFilterRequest(
+            String filter
+    ) {}
+
+    // ===== USER STATS =====
+    public record StatsRequest(
+            String type
+    ) {}
+
+    public record StatsResponse(
+            String status,
+            String summary
+    ) {}
+
+    // ===== COMMON RESPONSES =====
     public record SimpleResponse(
             String status,
             String message
     ) {}
 
-    // Each user in list
     public record UserSummary(
             String name,
             String email,
@@ -64,10 +83,43 @@ public class ToolRecords {
             String city
     ) {}
 
-    // List response
     public record UserListResponse(
             String status,
             int count,
-            java.util.List<UserSummary> users
+            List<UserSummary> users
+    ) {}
+
+    // ===== ADMIN REQUEST TOOLS =====
+
+    public record PendingRequestsRequest(
+            String filter
+            // "all", "pending", "approved", "rejected"
+    ) {}
+
+    public record AdminRequestSummary(
+            String id,
+            String userName,
+            String userEmail,
+            String reason,
+            String status,
+            String requestedAt
+    ) {}
+
+    public record AdminRequestListResponse(
+            String status,
+            int count,
+            java.util.List<AdminRequestSummary> requests
+    ) {}
+
+    public record ApproveRejectRequest(
+            String userEmail
+    ) {}
+
+    public record RequestCountResponse(
+            String status,
+            int pending,
+            int approved,
+            int rejected,
+            int total
     ) {}
 }
